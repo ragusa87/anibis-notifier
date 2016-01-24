@@ -12,6 +12,13 @@ class CacheService
     public function __construct($dir)
     {
         $this->dir = $dir;
+
+        if (false === file_exists($this->dir)) {
+            $r = mkdir($this->dir, 777);
+            if($r === false){
+                throw new \RuntimeException("Unable to create cache directory: ".$this->dir);
+            }
+        }
     }
 
     /**
@@ -25,7 +32,7 @@ class CacheService
             "content" => $value,
             "date"    => time()
         ]);
-        file_put_contents($this->dir . $key, $data);
+        file_put_contents($this->getFile($key), $data);
 
     }
 
@@ -35,12 +42,12 @@ class CacheService
      */
     private function getFile($key)
     {
-        return $this->dir . md5($key);
+        return $this->dir . md5($key) . ".txt";
     }
 
     /**
      * @param string $key key
-     * @param int|null $maxAge max age in seconds, null for infinite
+     * @param int|null $maxAge max age in seconds, null for infinite cache duration, 0 to bypass cache
      * @return mixed Cached object or null
      */
     public function get($key, $maxAge = null)

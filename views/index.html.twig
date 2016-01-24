@@ -1,22 +1,35 @@
 <!DOCTYPE html >
 <html>
     <head>
-        <title>Try me</title>
+        <title>{{ newResults|length }} nouveaux résultats</title>
         <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-7s5uDGW3AHqw6xtJmNNtr+OBRJUlgkNJEo78P4b0yRw= sha512-nNo+yCHEyn0smMxSswnf/OnX6/KwJuZTlNZBjauKhTK0c+zT+q5JOCx0UFhXQ6rJR9jg6Es8gPuD2uZcYDLqSw==" crossorigin="anonymous">
     </head>
     <body>
         <div class="container">
-            <h1>Résultats anibis apparts</h1>
+
+            {%  if nbNotifications > 0 %}
+            <div class="alert alert-success">
+                {{ nbNotifications }} notifications envoyées
+            </div>
+            {% else %}
+                <div class="alert alert-danger">
+                    {{ nbNotifications }} notification envoyée
+                </div>
+            {% endif %}
+
+            <h1>{{ newResults|length }} nouveaux résultats</h1>
             {% for r in results %}
-                <a href="{{ r.url }}">{{ r.title }}</a>
+                {{ r.id }} - <a href="{{ r.url }}">{{ r.title }}</a>
                 <p>
                     {{ r.description }}
                 </p>
                 <ul>
-                {% for t in r.tags %}
-                    <li>{{ t }}</li>
-                {% endfor %}
+                    {% for t in r.tags %}
+                        <li>{{ t }}</li>
+                    {% endfor %}
                 </ul>
+            {% else %}
+                <p>Aucune nouvelle annonce</p>
             {% endfor %}
             &copy; LCO
         </div>

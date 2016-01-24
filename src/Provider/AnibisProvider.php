@@ -14,6 +14,11 @@ use Requests;
 use Requests_Response;
 use Symfony\Component\DomCrawler\Crawler;
 
+/**
+ * Class AnibisProvider
+ * @package Anibis\Provider
+ * Send a Search request to anibis parse and populate results
+ */
 class AnibisProvider
 {
     private $url = "http://www.anibis.ch/fr/immobilier--16/advertlist.aspx";
@@ -51,15 +56,39 @@ class AnibisProvider
             }
 
             $result = new AnibisResult();
-            $result->setTitle($c->filter(".details a")->text());
+            $result->setTitle(trim($c->filter(".details a")->text()));
             $result->setTags($tags);
-            $result->setUrl("http://www.anibis.ch/".$c->filter(".details a")->attr("href"));
+            $relUrl = $c->filter(".details a")->attr("href");
+
+            $id = explode("--",explode("/",parse_url($relUrl)["path"])[2])[1];
+            $result->setId(intval($id));
+            $result->setUrl("http://www.anibis.ch/" . $relUrl);
             $result->setPrice($c->filter(".price")->text());
             $result->setDescription($c->filter(".details .description")->text());
+
 
             $results[] = $result;
 
         }
         return $results;
+    }
+
+    /**
+     * Remove bad results
+     * @param SearchCriteria $searchCriteria
+     * @param AnibisResult[] $result
+     * @return AnibisResult[]
+     */
+    public function filter(SearchCriteria $searchCriteria, array $result)
+    {
+        return array_filter($result, function (AnibisResult $e) use ($searchCriteria) {
+            $blacklist = explode(" ", $searchCriteria->getTitleBlacklist());
+            foreach ($blacklist as $term) {
+                if (strpos(strtolower($e->getTitle()), strtolower($term)) !== FALSE) {
+                    return false;
+                }
+            }
+            return true;
+        });
     }
 }

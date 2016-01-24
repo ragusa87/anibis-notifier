@@ -1,10 +1,7 @@
 <?php
 namespace Anibis\Result;
 /**
- * Created by PhpStorm.
- * User: laurent
- * Date: 13.01.16
- * Time: 16:24
+ * Anibis result
  */
 class AnibisResult
 {

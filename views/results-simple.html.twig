@@ -1,0 +1,9 @@
+{# HTML used as a notification #}
+{%- for r in results -%}
+<a href="{{ r.url }}">{{ r.title }}</a>
+<pre>
+{%- for t in r.tags -%}
+- {{ t }}{{ "\n" }}
+{%- endfor -%}
+</pre>
+{%-  endfor -%}

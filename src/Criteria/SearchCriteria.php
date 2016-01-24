@@ -6,12 +6,16 @@
  * Time: 15:26
  */
 namespace Anibis\Criteria;
+/**
+ * Criteria used to run a search query
+ * @package Anibis\Criteria
+ */
 class SearchCriteria {
     private $term = "Appartement";
     private $locality = "Lausanne";
     private $min = 1000;
     private $max = 1500;
-
+    private $titleBlacklist = "cherche";
     /**
      * @return string
      */
@@ -74,5 +78,21 @@ class SearchCriteria {
     public function setLocality($locality)
     {
         $this->locality = $locality;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitleBlacklist()
+    {
+        return $this->titleBlacklist;
+    }
+
+    /**
+     * @param string $titleBlacklist
+     */
+    public function setTitleBlacklist($titleBlacklist)
+    {
+        $this->titleBlacklist = $titleBlacklist;
     }
 }
