@@ -2,12 +2,10 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 // web/index.php
-use Anibis\Cache\CacheService;
 use Anibis\Criteria\SearchCriteria;
 use Anibis\Db\DbService;
 use Anibis\Notify\TelegramService;
-use Anibis\Provider\AnibisProvider;
-use Anibis\Result\AnibisResult;
+use Anibis\Result\Result;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -18,23 +16,24 @@ $app = new \Anibis\App([
 ]);
 
 $app->get('/', function (Request $request) use ($app) {
-    /** @var CacheService $cache */
-    $cache = $app["cache"];
 
     $s = new SearchCriteria();
-    $p = new AnibisProvider();
+    $providers = [ "anibis" , "homegate"];
 
-    if (($response = $cache->get("anibis.search", 60 * 20)) === null) { // Cached for 20 minutes
-        $response = $p->fetch($s);
-        $cache->save("anibis.search", $response);
+    $results = [];
+    foreach ($providers as $name) {
+        try {
+            $provider = $app[$name];
+            $results = array_merge($results, call_user_func([$provider, "getCachedResults"], $s));
+        } catch (Requests_Exception $re) {
+            $app["notify"]->notify("Error while getting results for ".$name. " :".$re->getMessage(),false);
+        }
     }
-    $results = $p->parse($response);
-    $results = $p->filter($s, $results);
 
     // Process new offers
     /** @var DbService $db */
     $db = $app["db"];
-    $newResults = array_filter($results, function (AnibisResult $el) use ($db) {
+    $newResults = array_filter($results, function (Result $el) use ($db) {
         if ($db->containsId($el->getId())) {
             return false;
         }
@@ -51,9 +50,9 @@ $app->get('/', function (Request $request) use ($app) {
     if (!empty($newResults)) {
         /** @var TelegramService $bot */
         $bot = $app["notify"];
-        foreach($newResults as $res){
+        foreach ($newResults as $res) {
             $html = $app["twig"]->render("results-simple.html.twig", ["results" => [$res]]);
-            $nbNotifications = $bot->notify($html,true);
+            $nbNotifications = $bot->notify($html, true);
         }
 
     }

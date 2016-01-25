@@ -40,7 +40,7 @@ class DbService
     }
 
     /**
-     * @param array $ids
+     * @param mixed[] $ids
      */
     public function addIds(array $ids)
     {
@@ -55,7 +55,7 @@ class DbService
     }
 
     /**
-     * @param $id
+     * @param mixed $id
      */
     public function addId($id)
     {
@@ -63,7 +63,7 @@ class DbService
     }
 
     /**
-     * @param $id
+     * @param mixed $id
      */
     public function removeId($id)
     {
@@ -71,7 +71,7 @@ class DbService
     }
 
     /**
-     * @param $id
+     * @param mixed $id
      * @param bool $strict
      * @return bool
      */
@@ -82,7 +82,7 @@ class DbService
     }
 
     /**
-     * @return array
+     * @return mixed[]
      */
     public function getIds()
     {
@@ -95,13 +95,13 @@ class DbService
             return [];
         }
         $this->ids = array_map(function ($el) {
-            return intval($el);
+            return $el;
         }, explode("\n", $ids));
         return $this->ids;
     }
 
     /**
-     * @param $ids
+     * @param $ids[]
      * @return bool
      */
     private function saveIds(array $ids)

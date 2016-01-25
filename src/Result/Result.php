@@ -1,9 +1,9 @@
 <?php
 namespace Anibis\Result;
 /**
- * Anibis result
+ * Result
  */
-class AnibisResult
+class Result
 {
     /**
      * @var int

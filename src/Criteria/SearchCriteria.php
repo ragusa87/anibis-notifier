@@ -10,12 +10,18 @@ namespace Anibis\Criteria;
  * Criteria used to run a search query
  * @package Anibis\Criteria
  */
-class SearchCriteria {
+class SearchCriteria
+{
     private $term = "Appartement";
     private $locality = "Lausanne";
     private $min = 1000;
     private $max = 1500;
+    private $sizeMin = 2;
+    private $sizeMax = 2.5;
+
+
     private $titleBlacklist = "cherche";
+
     /**
      * @return string
      */
@@ -94,5 +100,37 @@ class SearchCriteria {
     public function setTitleBlacklist($titleBlacklist)
     {
         $this->titleBlacklist = $titleBlacklist;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSizeMin()
+    {
+        return $this->sizeMin;
+    }
+
+    /**
+     * @param int $sizeMin
+     */
+    public function setSizeMin($sizeMin)
+    {
+        $this->sizeMin = $sizeMin;
+    }
+
+    /**
+     * @return float
+     */
+    public function getSizeMax()
+    {
+        return $this->sizeMax;
+    }
+
+    /**
+     * @param float $sizeMax
+     */
+    public function setSizeMax($sizeMax)
+    {
+        $this->sizeMax = $sizeMax;
     }
 }

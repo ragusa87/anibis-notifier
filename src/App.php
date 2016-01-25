@@ -12,6 +12,8 @@ namespace Anibis;
 use Anibis\Cache\CacheService;
 use Anibis\Db\DbService;
 use Anibis\Notify\TelegramService;
+use Anibis\Provider\AnibisProvider;
+use Anibis\Provider\HomegateProvider;
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
 use Symfony\Component\Yaml\Exception\RuntimeException;
@@ -36,6 +38,7 @@ class App extends Application
             'twig.path' => __DIR__ . '/../views',
         ));
 
+
         $this["cache"] = $this->share(function () {
             return new CacheService(__DIR__ . "/../var/cache/");
         });
@@ -50,6 +53,14 @@ class App extends Application
                 $this->parameters["telegram_bot_key"],
                 new DbService(__DIR__ . "/../var/cache/db-subscribers.txt")
             );
+        });
+
+        $this["anibis"] = $this->share(function () {
+            return new AnibisProvider($this["cache"]);
+        });
+
+        $this["homegate"] = $this->share(function () {
+            return new HomegateProvider($this["cache"]);
         });
     }
 
