@@ -58,6 +58,7 @@ $app->post("/", function () use ($app) {
     $bot->setCommand("/echo", function (TelegramService $service, BotMessage $message, array $parameters) {
         if (count($parameters) <= 1) {
             $service->reply($message, "Please add a text, Ex:".$service->getCurrentCommand()." Hello World");
+            return true;
         }
         $txt = implode(" ", $parameters);
         return $service->reply($message, $txt);
