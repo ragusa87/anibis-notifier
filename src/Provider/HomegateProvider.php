@@ -7,7 +7,6 @@
  */
 namespace Anibis\Provider;
 
-use Anibis\Cache\CacheService;
 use Anibis\Criteria\SearchCriteria;
 use Anibis\Result\Result;
 use DOMElement;
@@ -21,38 +20,12 @@ use Symfony\Component\DomCrawler\Crawler;
  * @package Anibis\Provider
  * Send a Search request to homegate parse and populate results
  */
-class HomegateProvider implements ProviderInterface
+class HomegateProvider extends AbstractProvider
 {
     private $url = "http://m.homegate.ch/fr?0-1.IFormSubmitListener-search-searchForm";
-    /**
-     * @var CacheService
-     */
-    private $cache;
-
-    public function __construct(CacheService $cache)
-    {
-
-        $this->cache = $cache;
-    }
 
     /**
-     * @param SearchCriteria $search
-     * @param int|null $duration @see CacheService#get
-     * @return \Anibis\Result\Result[]
-     */
-    public function getCachedResults(SearchCriteria $search, $duration = 1200)
-    {
-        if (($response = $this->cache->get("homegate.search", $duration)) === null) { // Cached for 20 minutes
-            $response = $this->fetch($search);
-            $this->cache->save("homegate.search", $response);
-        }
-        $results = $this->parse($response);
-        return $this->filter($search, $results);
-    }
-
-    /**
-     * @param SearchCriteria $searchCriteria
-     * @return Requests_Response
+     * @inheritdoc
      */
     public function fetch(SearchCriteria $searchCriteria)
     {
@@ -91,25 +64,19 @@ class HomegateProvider implements ProviderInterface
     }
 
     /**
-     * @param Requests_Response $requests
-     * @return Result[]
+     * @inheritdoc
      */
-
-    private function parse(Requests_Response $requests)
+    protected function parse(Requests_Response $requests)
     {
         $crawler = new Crawler();
         $crawler->addContent($requests->body);
 
         $r = $crawler->filter("#page > main > section > div > div.result-item-list article a > .box-row");
-        // $r = $r->filter("article");
         $results = array();
         /** @var DOMElement $el */
-        $i = 0;
         foreach ($r as $el) {
-            $i++;
             $c = new Crawler();
             $c->add($el);
-
 
             $tags = [];
             /** @var DOMElement $z */
@@ -131,37 +98,18 @@ class HomegateProvider implements ProviderInterface
                 $result->setDescription($c->filter("item-description p")->text());
             }
 
-
             $link = ($el->parentNode->attributes->getNamedItem("href")->nodeValue);
             $result->setId($this->getName() . "_" . explode("/", $link)[2]);
             $result->setUrl("http://m.homegate.ch/" . $link);
 
             $results[] = $result;
-
         }
 
         return $results;
     }
-
     /**
-     * Remove bad results
-     * @param SearchCriteria $searchCriteria
-     * @param Result[] $result
-     * @return Result[]
+     * @inheritdoc
      */
-    private function filter(SearchCriteria $searchCriteria, array $result)
-    {
-        return array_filter($result, function (Result $e) use ($searchCriteria) {
-            $blacklist = explode(" ", $searchCriteria->getTitleBlacklist());
-            foreach ($blacklist as $term) {
-                if (strpos(strtolower($e->getTitle()), strtolower($term)) !== FALSE) {
-                    return false;
-                }
-            }
-            return true;
-        });
-    }
-
     public function getName()
     {
         return "homegate";

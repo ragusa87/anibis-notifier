@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 
 /**
- * Class NotifiyService
+ * Class TelegramService
  * Notify by sending message via telegram
  * @package Anibis\Notify
  */
@@ -40,22 +40,76 @@ class TelegramService
     private $currentCommand = null;
 
     /**
-     * NotifiyService constructor.
+     * TelegramService constructor.
      * @param $apiKey
      * @param DbService $db
      */
     public function __construct($apiKey, DbService $db)
     {
-        if($apiKey === null){
+        if ($apiKey === null) {
             throw new \RuntimeException("Invalid api key");
         }
         $this->apiKey = $apiKey;
         $this->db = $db;
         $this->commands = ["/help" => function (TelegramService $bot, BotMessage $message, array $arguments = array()) {
+            $text = "";
+            if (!empty($arguments)) {
+                $text .= $bot->getCurrentCommand() . " takes no arguments.\n";
+            }
             return $bot->reply(
                 $message,
-                "Commands:\n" . implode("\n", array_keys($bot->commands)) . ".");
+                $text . "Commands:\n" . implode("\n", array_keys($bot->commands)) . ".");
         }];
+    }
+
+    /**
+     * Name of the current command
+     * @return string|null
+     */
+    public function getCurrentCommand()
+    {
+        return $this->currentCommand;
+    }
+
+    /**
+     * Send a message back to user
+     * @param BotMessage $source
+     * @param string $text text message
+     * @param array $options
+     * @throws \RuntimeException
+     * @return bool success
+     */
+    public function reply(BotMessage $source, $text, array $options = array())
+    {
+        return $this->send("sendMessage", array_merge([
+            "chat_id" => $source->getChatId(),
+            "text"    => $text
+        ], $options));
+    }
+
+    /**
+     * @param string $method API Method
+     * @param array $parameters
+     * @return bool true on success
+     * @throws \RuntimeException On bad request
+     */
+    public function send($method, array $parameters = array())
+    {
+        $parameters["method"] = $method;
+
+        $handle = curl_init('https://api.telegram.org/bot' . $this->apiKey . '/');
+        curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($handle, CURLOPT_TIMEOUT, 60);
+        curl_setopt($handle, CURLOPT_POSTFIELDS, json_encode($parameters));
+        curl_setopt($handle, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
+
+        $response = $this->exec_curl_request($handle);
+        if ($response->getStatusCode() !== 200) {
+            throw new \RuntimeException("Error sending request: " . $response->getContent());
+        }
+        return true;
+
     }
 
     /**
@@ -92,31 +146,6 @@ class TelegramService
     }
 
     /**
-     * @param string $method API Method
-     * @param array $parameters
-     * @return bool true on success
-     * @throws \RuntimeException On bad request
-     */
-    public function send($method, array $parameters = array())
-    {
-        $parameters["method"] = $method;
-
-        $handle = curl_init('https://api.telegram.org/bot' . $this->apiKey . '/');
-        curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, 5);
-        curl_setopt($handle, CURLOPT_TIMEOUT, 60);
-        curl_setopt($handle, CURLOPT_POSTFIELDS, json_encode($parameters));
-        curl_setopt($handle, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
-
-        $response = $this->exec_curl_request($handle);
-        if ($response->getStatusCode() !== 200) {
-            throw new \RuntimeException("Error sending request: " . $response->getContent());
-        }
-        return true;
-
-    }
-
-    /**
      * @param BotMessage $message
      * @return bool Handle messages
      */
@@ -141,28 +170,12 @@ class TelegramService
     /**
      * Add a command
      * @param string $name command name starting with /
-     * @param \Closure $closure Closuse, get multiple params (bot,message,arguments)
+     * @param \Closure $closure Closure, get multiple params (bot,message,arguments)
      */
 
     public function setCommand($name, \Closure $closure)
     {
         $this->commands[$name] = $closure;
-    }
-
-    /**
-     * Send a message back to user
-     * @param BotMessage $source
-     * @param string $text text message
-     * @param array $options
-     * @throws RuntimeException
-     * @return bool success
-     */
-    public function reply(BotMessage $source, $text, array $options = array())
-    {
-        return $this->send("sendMessage", array_merge([
-            "chat_id" => $source->getChatId(),
-            "text"    => $text
-        ], $options));
     }
 
     /**
@@ -176,11 +189,11 @@ class TelegramService
     /**
      * Send html message to all subscribers.
      * @param $content
-     * @param bool $debug throw execption on error if true
-     * @throws RuntimeException
+     * @param bool $debug throw exception on error if true
+     * @throws \RuntimeException
      * @return int number of notification sent
      */
-    public function notify($content,$debug = false)
+    public function notify($content, $debug = false)
     {
         $ids = $this->db->getIds();
         if (empty($ids)) {
@@ -188,28 +201,19 @@ class TelegramService
         }
         $nb = 0;
         foreach ($ids as $messageId) {
-            try{
+            try {
                 $this->send("sendMessage", [
                     "chat_id"    => $messageId,
                     "text"       => $content,
                     "parse_mode" => "HTML"
                 ]);
                 $nb += 1;
-            }catch(\RuntimeException $re){
-                if($debug){
+            } catch (\RuntimeException $re) {
+                if ($debug) {
                     throw $re;
                 }
             }
         }
         return $nb;
-    }
-
-    /**
-     * Name of the current command
-     * @return string|null
-     */
-    public function getCurrentCommand()
-    {
-        return $this->currentCommand;
     }
 }
