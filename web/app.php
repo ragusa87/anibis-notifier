@@ -52,7 +52,7 @@ $app->get('/', function (Request $request) use ($app) {
         $bot = $app["notify"];
         foreach ($newResults as $res) {
             $html = $app["twig"]->render("results-simple.html.twig", ["results" => [$res]]);
-            $nbNotifications = $bot->notify($html, true);
+            $nbNotifications += $bot->notify($html, true);
         }
 
     }
