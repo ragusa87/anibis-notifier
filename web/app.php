@@ -12,13 +12,13 @@ use Symfony\Component\HttpFoundation\Request;
  * @var \Silex\Application $app
  */
 $app = new \Anibis\App([
-    'debug' => false
+    'debug' => strpos($_SERVER['SCRIPT_NAME'], "_dev.php") !== false
 ]);
 
 $app->get('/', function (Request $request) use ($app) {
 
     $s = new SearchCriteria();
-    $providers = [ "anibis" , "homegate"];
+    $providers = ["anibis", "homegate"];
 
     $results = [];
     foreach ($providers as $name) {
@@ -26,7 +26,10 @@ $app->get('/', function (Request $request) use ($app) {
             $provider = $app[$name];
             $results = array_merge($results, call_user_func([$provider, "getCachedResults"], $s));
         } catch (Requests_Exception $re) {
-            $app["notify"]->notify("Error while getting results for ".$name. " :".$re->getMessage(),false);
+            $app["notify"]->notify("Error while getting results for " . $name . " :" . $re->getMessage(), false);
+            if ($app["dev"]) {
+                throw $re;
+            }
         }
     }
 
