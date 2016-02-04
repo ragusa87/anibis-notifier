@@ -40,7 +40,7 @@ class App extends Application
 
 
         $this["cache"] = $this->share(function () {
-            return new CacheService(__DIR__ . "/../var/cache/");
+            return new CacheService(__DIR__ . "/../var/cache/", !$this["debug"]);
         });
 
 

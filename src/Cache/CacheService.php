@@ -9,7 +9,9 @@ namespace Anibis\Cache;
 
 class CacheService
 {
-    public function __construct($dir)
+    private $enabled;
+
+    public function __construct($dir, $enabled = true)
     {
         $this->dir = $dir;
 
@@ -19,6 +21,7 @@ class CacheService
                 throw new \RuntimeException("Unable to create cache directory: ".$this->dir);
             }
         }
+        $this->enabled = $enabled;
     }
 
     /**
@@ -28,6 +31,9 @@ class CacheService
      */
     public function save($key, $value)
     {
+        if (false === $this->enabled) {
+            return;
+        }
         $data = serialize([
             "content" => $value,
             "date"    => time()
@@ -52,7 +58,7 @@ class CacheService
      */
     public function get($key, $maxAge = null)
     {
-        if ($maxAge === 0 || false == file_exists($this->getFile($key))) {
+        if ($this->enabled === false || $maxAge === 0 || false == file_exists($this->getFile($key))) {
             return null;
         }
 
