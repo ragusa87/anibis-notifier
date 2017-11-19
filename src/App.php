@@ -72,6 +72,34 @@ class App extends Application
         }
         $yaml = new Parser();
         $this->parameters = $yaml->parse(file_get_contents($file));
+        $this->parameters = self::replaceTokens($this->parameters);
     }
 
+
+    /**
+     * Replaces tokens in the configuration.
+     *
+     * @param mixed $data   Configuration
+     * @param array $tokens Tokens to replace
+     * Source: https://github.com/lokhman/silex-config/blob/master/src/Silex/Provider/ConfigServiceProvider.php
+     * @return mixed
+     */
+    public static function replaceTokens($data, $tokens = [])
+    {
+        if (is_string($data)) {
+            return preg_replace_callback('/%env\((.*)\)%/', function ($matches) use ($tokens) {
+                $token = strtoupper($matches[1]);
+                if (isset($tokens[$token])) {
+                    return $tokens[$token];
+                }
+                return getenv($token) ?: $matches[0];
+            }, $data);
+        }
+        if (is_array($data)) {
+            array_walk($data, function (&$value) use ($tokens) {
+                $value = static::replaceTokens($value, $tokens);
+            });
+        }
+        return $data;
+    }
 }
