@@ -25,6 +25,7 @@ COPY composer.lock /app/current/
 WORKDIR /app/current
 RUN /usr/bin/composer install --no-scripts --no-plugins
 RUN mkdir -p var/cache && chmod -R 777 var/cache
+RUN cp parameters.yml.dist parameters.yml
 # copy source & run
 COPY . /app/current
 

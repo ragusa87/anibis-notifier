@@ -3,3 +3,7 @@ vendor
 var/log
 var/cache
 parameters.yml
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
