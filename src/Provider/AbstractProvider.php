@@ -1,13 +1,6 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: laurent
- * Date: 25.01.16
- * Time: 22:57
- */
 
 namespace Anibis\Provider;
-
 
 use Anibis\Cache\CacheService;
 use Anibis\Criteria\SearchCriteria;
@@ -77,5 +70,4 @@ abstract class AbstractProvider implements ProviderInterface
             return true;
         });
     }
-
 }

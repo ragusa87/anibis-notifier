@@ -1,10 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: laurent
- * Date: 13.01.16
- * Time: 15:23
- */
+
 namespace Anibis\Provider;
 
 use Anibis\Criteria\SearchCriteria;
@@ -21,14 +16,14 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 class AnibisProvider extends AbstractProvider
 {
-    private $url = "http://www.anibis.ch/fr/immobilier--16/advertlist.aspx";
+    private $url = "https://www.anibis.ch/fr/advertlist.aspx";
 
     /**
      * @inheritdoc
      */
     protected function fetch(SearchCriteria $searchCriteria)
     {
-        $url = $this->url . "?fts=" . urlencode($searchCriteria->getTerm()) . "&loc=" . urlencode($searchCriteria->getLocality()) . "&sdc=10&aidl=15221&sf=dpo&so=d&p=0";
+        $url = $this->url . "?fts=" . urlencode($searchCriteria->getTerm()) . "&loc=" . urlencode($searchCriteria->getLocality()) . "&sdc=5&aral=834_12_1054&sf=dpo&so=d&p=0";
         return Requests::POST($url);
     }
 
@@ -39,31 +34,52 @@ class AnibisProvider extends AbstractProvider
     {
         $crawler = new Crawler();
         $crawler->addContent($requests->body);
-        $r = $crawler->filterXPath('//*[@id="content"]/div/div[2]/div[1]/div[1]/ul/li');
+        /** @var Crawler $r */
+        $r = $crawler->filterXPath('//*[@id="aspnetForm"]/div[1]/main/div/div[2]/div[2]/div[3]/ul/li');
         $results = array();
         /** @var DOMElement $el */
-        foreach ($r as $el) {
-            $c = new Crawler();
-            $c->add($el);
 
-            $tags = [];
-            /** @var DOMElement $z */
-            foreach ($c->filter(".horizontal-separated-list li") as $z) {
-                $tags[] = $z->textContent;
+        foreach ($r as $index => $el) {
+            try {
+                if ($index < 3) {
+                    continue;
+                }
+                $c = new Crawler();
+                $c->add($el);
+
+                $tags = [];
+
+                /** @var DOMElement $z */
+                foreach ($c->filter(".listing-info li") as $z) {
+                    $tags[] = $z->textContent;
+                }
+
+
+                $result = new Result();
+                if ($c->filter(".listing-info a")->count() > 0) {
+                    $result->setTitle(trim($c->filter(".listing-info a")->text()));
+                    $relUrl = $c->filter(".listing-info a")->attr("href");
+                }else{
+                    // TODO Bad node to log
+                    continue;
+                }
+                $result->setTags($tags);
+
+
+                $id = explode("--", explode("/", parse_url($relUrl)["path"])[2])[1];
+
+                $result->setId($this->getName() . "_" . intval($id));
+                $result->setUrl("http://www.anibis.ch/" . $relUrl);
+
+
+                $result->setPrice($c->filter(".listing-price")->text());
+
+                $result->setDescription($c->filter(".listing-description")->text());
+
+                $results[] = $result;
+            } catch (\Exception $e) {
+                throw new \RuntimeException("Unable to parse result " . $index, 0, $e);
             }
-
-            $result = new Result();
-            $result->setTitle(trim($c->filter(".details a")->text()));
-            $result->setTags($tags);
-            $relUrl = $c->filter(".details a")->attr("href");
-
-            $id = explode("--", explode("/", parse_url($relUrl)["path"])[2])[1];
-            $result->setId($this->getName() . "_" . intval($id));
-            $result->setUrl("http://www.anibis.ch/" . $relUrl);
-            $result->setPrice($c->filter(".price")->text());
-            $result->setDescription($c->filter(".details .description")->text());
-
-            $results[] = $result;
 
         }
         return $results;

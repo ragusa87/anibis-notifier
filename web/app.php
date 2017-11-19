@@ -18,7 +18,7 @@ $app = new \Anibis\App([
 $app->get('/', function (Request $request) use ($app) {
 
     $s = new SearchCriteria();
-    $providers = [ "anibis" , "homegate"];
+    $providers = ["anibis"]; // FIXME "homegate" is not working anymore.
 
     $results = [];
     foreach ($providers as $name) {
@@ -26,7 +26,11 @@ $app->get('/', function (Request $request) use ($app) {
             $provider = $app[$name];
             $results = array_merge($results, call_user_func([$provider, "getCachedResults"], $s));
         } catch (Requests_Exception $re) {
-            $app["notify"]->notify("Error while getting results for ".$name. " :".$re->getMessage(),false);
+            if ($app['debug']) {
+                throw $re;
+            } else {
+                $app["notify"]->notify("Error while getting results for " . $name . " :" . $re->getMessage(), false);
+            }
         }
     }
 
@@ -61,8 +65,8 @@ $app->get('/', function (Request $request) use ($app) {
     // Html content
     /** @var \Symfony\Component\HttpFoundation\Response $response */
     return $app["twig"]->render("index.html.twig", [
-        "results"         => $results,
-        "newResults"      => $newResults,
+        "results" => $results,
+        "newResults" => $newResults,
         "nbNotifications" => $nbNotifications
     ]);
 
