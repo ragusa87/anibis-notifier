@@ -39,29 +39,29 @@ class App extends Application
         ));
 
 
-        $this["cache"] = $this->share(function () {
+        $this["cache"] = function () {
             return new CacheService(__DIR__ . "/../var/cache/");
-        });
+        };
 
 
-        $this["db"] = $this->share(function () {
+        $this["db"] = function () {
             return new DbService(__DIR__ . "/../var/cache/db-results.txt");
-        });
+        };
 
-        $this["notify"] = $this->share(function () {
+        $this["notify"] = function () {
             return new TelegramService(
                 $this->parameters["telegram_bot_key"],
                 new DbService(__DIR__ . "/../var/cache/db-subscribers.txt")
             );
-        });
+        };
 
-        $this["anibis"] = $this->share(function () {
+        $this["anibis"] = function () {
             return new AnibisProvider($this["cache"]);
-        });
+        };
 
-        $this["homegate"] = $this->share(function () {
+        $this["homegate"] = function () {
             return new HomegateProvider($this["cache"]);
-        });
+        };
     }
 
     private function loadParameters()
