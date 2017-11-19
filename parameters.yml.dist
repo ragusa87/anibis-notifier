@@ -1,2 +1,2 @@
 # Go to https://telegram.me/botfather to create a bot and get an API Key
-telegram_bot_key: ~
+telegram_bot_key: "%env(TELEGRAM_BOT_KEY)%"
