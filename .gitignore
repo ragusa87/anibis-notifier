@@ -1,4 +1,5 @@
 vendor
 .idea
 var/log
+var/cache
 parameters.yml
