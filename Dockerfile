@@ -22,10 +22,12 @@ php -r "unlink('composer-setup.php');"
 # run composer install
 COPY composer.json /app/current/
 COPY composer.lock /app/current/
+
 WORKDIR /app/current
 RUN /usr/bin/composer install --no-scripts --no-plugins
 RUN mkdir -p var/cache && chmod -R 777 var/cache
-RUN cp parameters.yml.dist parameters.yml
+COPY parameters.yml.dist  /app/current/parameters.yml
+
 # copy source & run
 COPY . /app/current
 
